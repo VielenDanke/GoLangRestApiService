@@ -95,11 +95,12 @@ func (s *server) authenticateUser(next http.Handler) http.Handler {
 		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 			username := claims["username"]
 			expiration := claims["expiration"]
-			tm := time.Unix(expiration.(int64), 0)
-			if !time.Now().Before(tm) {
+			validTime, err := time.Parse(time.RFC3339, expiration.(string))
+			if !time.Now().Before(validTime) || err != nil {
 				s.errorRespond(w, fmt.Errorf("Token is expired"), 401)
 				return
 			}
+			fmt.Print(expiration)
 			user, err := s.service.UserService().FindByUsername(username.(string))
 			if err != nil {
 				s.errorRespond(w, err, 401)
@@ -185,7 +186,7 @@ func (s *server) createToken(user *model.User) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"username":   user.Username,
 		"role":       user.Authority,
-		"expiration": time.Now().Add(time.Hour * 15).Unix(),
+		"expiration": time.Now().Add(time.Hour * 15),
 	})
 	tokenString, err := token.SignedString([]byte(s.config.TokenSecret))
 	if err != nil {
