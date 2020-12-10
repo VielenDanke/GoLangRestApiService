@@ -29,8 +29,8 @@ func (ur *UserRepository) FindAll() ([]model.User, error) {
 // Save ...
 func (ur *UserRepository) Save(user *model.User) error {
 	row := ur.db.QueryRow(
-		"INSERT INTO users(id, username, encrypted_password, nickname) VALUES($1, $2, $3, $5)",
-		user.ID, user.Username, user.EncryptedPassword, user.Nickname,
+		"INSERT INTO users(id, username, encrypted_password, nickname, authority) VALUES($1, $2, $3, $4, $5)",
+		user.ID, user.Username, user.EncryptedPassword, user.Nickname, user.Authority,
 	)
 	if row.Err() != nil {
 		return row.Err()
@@ -47,9 +47,9 @@ func (ur *UserRepository) Find(id string) error {
 func (ur *UserRepository) FindByUsername(username string) (*model.User, error) {
 	user := &model.User{}
 	if err := ur.db.QueryRow(
-		"SELECT id, username, encrypted_password, nickname FROM users WHERE username=$1",
+		"SELECT id, username, encrypted_password, nickname, authority FROM users WHERE username=$1",
 		username,
-	).Scan(&user.ID, &user.Username, &user.EncryptedPassword, &user.Nickname); err != nil {
+	).Scan(&user.ID, &user.Username, &user.EncryptedPassword, &user.Nickname, &user.Authority); err != nil {
 		return nil, err
 	}
 	return user, nil

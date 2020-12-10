@@ -1,15 +1,25 @@
 package apiserver
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 
+	"github.com/dgrijalva/jwt-go"
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 	"github.com/vielendanke/restful-service/internal/app/model"
 	"github.com/vielendanke/restful-service/internal/app/service"
 	"github.com/vielendanke/restful-service/internal/app/sqlstore"
 )
+
+const (
+	ctxKeyUser ctxKey = iota + 1
+)
+
+type ctxKey int8
 
 type server struct {
 	logger  *logrus.Logger
@@ -46,16 +56,54 @@ func (s *server) configureLogger() error {
 }
 
 func (s *server) configureRouter() {
+	s.router.Use(handlers.CORS(
+		handlers.AllowedOrigins([]string{"*"}),
+		handlers.AllowedHeaders([]string{"*"}),
+		handlers.AllowedMethods([]string{"*"}),
+		handlers.AllowCredentials(),
+	))
 	s.router.HandleFunc("/login", s.handleUserLogin)
 
 	postsRouter := s.router.PathPrefix("/posts").Subrouter()
 	usersRouter := s.router.PathPrefix("/users").Subrouter()
 
 	postsRouter.HandleFunc("/", s.findAllPosts).Methods("GET")
-	postsRouter.HandleFunc("/", s.savePost).Methods("POST")
 
 	usersRouter.HandleFunc("/", s.findAllUsers).Methods("GET")
 	usersRouter.HandleFunc("/", s.saveUser).Methods("POST")
+
+	secure := s.router.PathPrefix("/auth").Subrouter()
+	secure.Use(s.authenticateUser)
+	secure.HandleFunc("/posts/", s.savePost).Methods("POST")
+}
+
+func (s *server) authenticateUser(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		authHeader := r.Header.Get("Authorization")
+
+		token, err := jwt.Parse(authHeader, func(token *jwt.Token) (interface{}, error) {
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("Token is not valid")
+			}
+			return s.config.TokenSecret, nil
+		})
+		if err != nil {
+			s.errorRespond(w, err, 401)
+			return
+		}
+		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+			username := claims["username"]
+			user, err := s.service.UserService().FindByUsername(username.(string))
+			if err != nil {
+				s.errorRespond(w, err, 401)
+				return
+			}
+			next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), ctxKeyUser, user)))
+		} else {
+			s.errorRespond(w, fmt.Errorf("Token is not valid"), 401)
+			return
+		}
+	})
 }
 
 func (s *server) handleUserLogin(w http.ResponseWriter, r *http.Request) {
@@ -68,6 +116,13 @@ func (s *server) handleUserLogin(w http.ResponseWriter, r *http.Request) {
 		s.errorRespond(w, err, 404)
 		return
 	}
+	token, err := s.createToken(user)
+	if err != nil {
+		s.errorRespond(w, err, 500)
+		return
+	}
+	w.Header().Set("Authorization", token)
+	w.Header().Set("Access-Control-Expose-Headers", "Authorization")
 	json.NewEncoder(w).Encode(user)
 }
 
@@ -117,4 +172,16 @@ func (s *server) errorRespond(w http.ResponseWriter, err error, status int) {
 	}
 	w.WriteHeader(status)
 	json.NewEncoder(w).Encode(errorMap)
+}
+
+func (s *server) createToken(user *model.User) (string, error) {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"username": user.Username,
+		"role":     user.Authority,
+	})
+	tokenString, err := token.SignedString([]byte(s.config.TokenSecret))
+	if err != nil {
+		return "", err
+	}
+	return tokenString, nil
 }

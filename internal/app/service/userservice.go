@@ -14,6 +14,7 @@ type UserService struct {
 // SaveUser ...
 func (us *UserService) SaveUser(user *model.User) error {
 	var err error
+	user.Authority = model.RoleUser
 	if err = user.BeforeSaving(); err != nil {
 		return err
 	}
@@ -24,6 +25,15 @@ func (us *UserService) SaveUser(user *model.User) error {
 		return err
 	}
 	return nil
+}
+
+// FindByUsername ...
+func (us *UserService) FindByUsername(username string) (*model.User, error) {
+	user, err := us.store.UserRepository().FindByUsername(username)
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
 }
 
 // Login ...

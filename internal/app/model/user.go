@@ -7,6 +7,13 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+const (
+	// RoleUser ...
+	RoleUser = iota + 1
+	// RoleAdmin ...
+	RoleAdmin
+)
+
 // User ...
 type User struct {
 	ID                string `json:"id"`
@@ -14,6 +21,7 @@ type User struct {
 	Password          string `json:"-"`
 	Nickname          string `json:"nickname"`
 	EncryptedPassword string `json:"-"`
+	Authority         int    `json:"-"`
 }
 
 // BeforeSaving ...

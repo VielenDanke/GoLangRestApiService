@@ -13,14 +13,14 @@ type PostRepository struct {
 
 // FindAll ...
 func (pr *PostRepository) FindAll() ([]model.Post, error) {
-	row, err := pr.db.Query("SELECT id, name, content FROM posts")
+	row, err := pr.db.Query("SELECT id, name, content, user_id FROM posts")
 	if err != nil {
 		return nil, err
 	}
 	posts := []model.Post{}
 	for row.Next() {
 		post := &model.Post{}
-		row.Scan(&post.ID, &post.Name, &post.Content)
+		row.Scan(&post.ID, &post.Name, &post.Content, &post.UserID)
 		posts = append(posts, *post)
 	}
 	return posts, nil
