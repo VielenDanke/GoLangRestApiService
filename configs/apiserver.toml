@@ -1,0 +1,3 @@
+bind_addr = ":8080"
+log_level = "debug"
+database_url = "host=localhost dbname=restful_api_dev sslmode=disable user=user password=userpassword"

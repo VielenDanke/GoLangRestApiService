@@ -1,0 +1,3 @@
+ALTER TABLE posts ADD COLUMN user_id VARCHAR;
+UPDATE posts SET user_id=(SELECT id FROM users LIMIT 1);
+ALTER TABLE posts ALTER COLUMN user_id SET NOT NULL;
