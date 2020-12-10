@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/handlers"
@@ -85,7 +86,7 @@ func (s *server) authenticateUser(next http.Handler) http.Handler {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, fmt.Errorf("Token is not valid")
 			}
-			return s.config.TokenSecret, nil
+			return []byte(s.config.TokenSecret), nil
 		})
 		if err != nil {
 			s.errorRespond(w, err, 401)
@@ -93,6 +94,12 @@ func (s *server) authenticateUser(next http.Handler) http.Handler {
 		}
 		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 			username := claims["username"]
+			expiration := claims["expiration"]
+			tm := time.Unix(expiration.(int64), 0)
+			if !time.Now().Before(tm) {
+				s.errorRespond(w, fmt.Errorf("Token is expired"), 401)
+				return
+			}
 			user, err := s.service.UserService().FindByUsername(username.(string))
 			if err != nil {
 				s.errorRespond(w, err, 401)
@@ -176,8 +183,9 @@ func (s *server) errorRespond(w http.ResponseWriter, err error, status int) {
 
 func (s *server) createToken(user *model.User) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"username": user.Username,
-		"role":     user.Authority,
+		"username":   user.Username,
+		"role":       user.Authority,
+		"expiration": time.Now().Add(time.Hour * 15).Unix(),
 	})
 	tokenString, err := token.SignedString([]byte(s.config.TokenSecret))
 	if err != nil {

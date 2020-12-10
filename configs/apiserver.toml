@@ -2,3 +2,4 @@ bind_addr = ":8080"
 log_level = "debug"
 database_url = "host=localhost dbname=restful_api_dev sslmode=disable user=user password=userpassword"
 token_secret = "dasjd2184812u*AW*$UWau)(_!(@JFjaskdauD@*Jd9aJDjsk"
+token_valid_time = 15
