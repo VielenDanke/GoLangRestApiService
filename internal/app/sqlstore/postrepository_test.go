@@ -43,3 +43,18 @@ func TestRepository_FindAllPostsByUserID(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotEqual(t, 0, len(posts))
 }
+
+func TestRepository_FindAll(t *testing.T) {
+	defer teardownTables("posts")
+	posts, err := testStore.PostRepository().FindAll()
+	assert.NoError(t, err)
+	assert.Equal(t, 0, len(posts))
+	post := model.TestPost(t)
+	post.ID = uuid.New().String()
+	post.UserID = uuid.New().String()
+	err = testStore.PostRepository().Save(post)
+	assert.NoError(t, err)
+	posts, err = testStore.PostRepository().FindAll()
+	assert.NoError(t, err)
+	assert.NotEqual(t, 0, len(posts))
+}
