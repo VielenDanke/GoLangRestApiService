@@ -10,8 +10,9 @@ require (
 	github.com/google/uuid v1.1.2
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.0
-	github.com/joho/godotenv v1.3.0 // indirect
+	github.com/joho/godotenv v1.3.0
 	github.com/lib/pq v1.9.0
 	github.com/sirupsen/logrus v1.7.0
+	github.com/stretchr/testify v1.6.1
 	golang.org/x/crypto v0.0.0-20201208171446-5f87f3452ae9
 )
