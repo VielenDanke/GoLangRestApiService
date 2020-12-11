@@ -68,6 +68,7 @@ func (s *server) configureRouter() {
 
 	postsRouter := s.router.PathPrefix("/posts").Subrouter()
 	postsRouter.HandleFunc("/", s.findAllPosts).Methods("GET")
+	postsRouter.HandleFunc("/{userID}/", s.handleUserPostsByUserID).Methods("GET")
 
 	usersRouter := s.router.PathPrefix("/users").Subrouter()
 	usersRouter.HandleFunc("/", s.findAllUsers).Methods("GET")
@@ -76,7 +77,7 @@ func (s *server) configureRouter() {
 	secure.Use(s.authenticateUser)
 	secure.HandleFunc("/posts/", s.savePost).Methods("POST")
 	secure.HandleFunc("/cabinet/", s.handleUserCabinet).Methods("GET")
-	secure.HandleFunc("/cabinet/posts/", s.handleAllUserPosts).Methods("GET")
+	secure.HandleFunc("/cabinet/posts/", s.handleAllUserPostsInCabinet).Methods("GET")
 }
 
 func (s *server) authenticateUser(next http.Handler) http.Handler {
@@ -114,6 +115,16 @@ func (s *server) authenticateUser(next http.Handler) http.Handler {
 	})
 }
 
+func (s *server) handleUserPostsByUserID(w http.ResponseWriter, r *http.Request) {
+	userID := mux.Vars(r)["userID"]
+	posts, err := s.service.PostService().FindAllPostsByUserID(userID)
+	if err != nil {
+		s.errorRespond(w, err, 500)
+		return
+	}
+	jsonResponse(w, 200, posts)
+}
+
 func (s *server) handleUserCabinet(w http.ResponseWriter, r *http.Request) {
 	if user := r.Context().Value(ctxKeyUser).(*model.User); user != nil {
 		jsonResponse(w, 200, user)
@@ -122,7 +133,7 @@ func (s *server) handleUserCabinet(w http.ResponseWriter, r *http.Request) {
 	s.errorRespond(w, fmt.Errorf("User in contenxt not found"), 401)
 }
 
-func (s *server) handleAllUserPosts(w http.ResponseWriter, r *http.Request) {
+func (s *server) handleAllUserPostsInCabinet(w http.ResponseWriter, r *http.Request) {
 	if user := r.Context().Value(ctxKeyUser).(*model.User); user != nil {
 		posts, err := s.service.PostService().FindAllPostsByUserID(user.ID)
 		if err != nil {
