@@ -64,18 +64,19 @@ func (s *server) configureRouter() {
 		handlers.AllowCredentials(),
 	))
 	s.router.HandleFunc("/login", s.handleUserLogin)
+	s.router.HandleFunc("/registration", s.saveUser).Methods("POST")
 
 	postsRouter := s.router.PathPrefix("/posts").Subrouter()
-	usersRouter := s.router.PathPrefix("/users").Subrouter()
-
 	postsRouter.HandleFunc("/", s.findAllPosts).Methods("GET")
 
+	usersRouter := s.router.PathPrefix("/users").Subrouter()
 	usersRouter.HandleFunc("/", s.findAllUsers).Methods("GET")
-	usersRouter.HandleFunc("/", s.saveUser).Methods("POST")
 
 	secure := s.router.PathPrefix("/auth").Subrouter()
 	secure.Use(s.authenticateUser)
 	secure.HandleFunc("/posts/", s.savePost).Methods("POST")
+	secure.HandleFunc("/cabinet/", s.handleUserCabinet).Methods("GET")
+	secure.HandleFunc("/cabinet/posts/", s.handleAllUserPosts).Methods("GET")
 }
 
 func (s *server) authenticateUser(next http.Handler) http.Handler {
@@ -100,7 +101,6 @@ func (s *server) authenticateUser(next http.Handler) http.Handler {
 				s.errorRespond(w, fmt.Errorf("Token is expired"), 401)
 				return
 			}
-			fmt.Print(expiration)
 			user, err := s.service.UserService().FindByUsername(username.(string))
 			if err != nil {
 				s.errorRespond(w, err, 401)
@@ -112,6 +112,27 @@ func (s *server) authenticateUser(next http.Handler) http.Handler {
 			return
 		}
 	})
+}
+
+func (s *server) handleUserCabinet(w http.ResponseWriter, r *http.Request) {
+	if user := r.Context().Value(ctxKeyUser).(*model.User); user != nil {
+		jsonResponse(w, 200, user)
+		return
+	}
+	s.errorRespond(w, fmt.Errorf("User in contenxt not found"), 401)
+}
+
+func (s *server) handleAllUserPosts(w http.ResponseWriter, r *http.Request) {
+	if user := r.Context().Value(ctxKeyUser).(*model.User); user != nil {
+		posts, err := s.service.PostService().FindAllPostsByUserID(user.ID)
+		if err != nil {
+			s.errorRespond(w, err, 500)
+			return
+		}
+		jsonResponse(w, 200, posts)
+		return
+	}
+	s.errorRespond(w, fmt.Errorf("User in context not found"), 401)
 }
 
 func (s *server) handleUserLogin(w http.ResponseWriter, r *http.Request) {
@@ -131,11 +152,25 @@ func (s *server) handleUserLogin(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Authorization", token)
 	w.Header().Set("Access-Control-Expose-Headers", "Authorization")
-	json.NewEncoder(w).Encode(user)
+	jsonResponse(w, 200, user)
 }
 
 func (s *server) savePost(w http.ResponseWriter, r *http.Request) {
-
+	user := r.Context().Value(ctxKeyUser).(*model.User)
+	saveRequest := &postSaveRequest{}
+	json.NewDecoder(r.Body).Decode(saveRequest)
+	post := &model.Post{
+		Name:    saveRequest.Name,
+		Content: saveRequest.Content,
+		UserID:  user.ID,
+	}
+	post.BeforeSaving()
+	if err := post.Validate(); err != nil {
+		s.errorRespond(w, err, 400)
+		return
+	}
+	s.service.PostService().SavePost(post)
+	w.WriteHeader(201)
 }
 
 func (s *server) saveUser(w http.ResponseWriter, r *http.Request) {
@@ -161,7 +196,7 @@ func (s *server) findAllPosts(w http.ResponseWriter, r *http.Request) {
 		s.errorRespond(w, err, 500)
 		return
 	}
-	json.NewEncoder(w).Encode(posts)
+	jsonResponse(w, 200, posts)
 }
 
 func (s *server) findAllUsers(w http.ResponseWriter, r *http.Request) {
@@ -170,7 +205,7 @@ func (s *server) findAllUsers(w http.ResponseWriter, r *http.Request) {
 		s.errorRespond(w, err, 500)
 		return
 	}
-	json.NewEncoder(w).Encode(users)
+	jsonResponse(w, 200, users)
 }
 
 func (s *server) errorRespond(w http.ResponseWriter, err error, status int) {
@@ -178,19 +213,23 @@ func (s *server) errorRespond(w http.ResponseWriter, err error, status int) {
 	errorMap := map[string]string{
 		"Error message": err.Error(),
 	}
-	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(errorMap)
+	jsonResponse(w, status, errorMap)
 }
 
 func (s *server) createToken(user *model.User) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"username":   user.Username,
 		"role":       user.Authority,
-		"expiration": time.Now().Add(time.Hour * 15),
+		"expiration": time.Now().Add(time.Hour * time.Duration(s.config.TokenValidTime)),
 	})
 	tokenString, err := token.SignedString([]byte(s.config.TokenSecret))
 	if err != nil {
 		return "", err
 	}
 	return tokenString, nil
+}
+
+func jsonResponse(w http.ResponseWriter, status int, body interface{}) {
+	jr := &JSONResponse{w, status}
+	jr.CreateJSONResponse(status, body)
 }
