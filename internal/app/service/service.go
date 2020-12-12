@@ -1,16 +1,18 @@
 package service
 
-import "github.com/vielendanke/restful-service/internal/app/sqlstore"
+import (
+	"github.com/vielendanke/restful-service/internal/app/store"
+)
 
 // Service ...
 type Service struct {
-	store       *sqlstore.Store
+	store       store.Store
 	userService *UserService
 	postService *PostService
 }
 
 // NewService ...
-func NewService(store *sqlstore.Store) *Service {
+func NewService(store store.Store) *Service {
 	return &Service{
 		store: store,
 	}

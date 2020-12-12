@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"net/http"
 
-	"github.com/vielendanke/restful-service/internal/app/sqlstore"
+	"github.com/vielendanke/restful-service/internal/app/store/sqlstore"
 )
 
 // Start ...

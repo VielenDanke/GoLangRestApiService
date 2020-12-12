@@ -2,12 +2,12 @@ package service
 
 import (
 	"github.com/vielendanke/restful-service/internal/app/model"
-	"github.com/vielendanke/restful-service/internal/app/sqlstore"
+	"github.com/vielendanke/restful-service/internal/app/store"
 )
 
 // PostService ...
 type PostService struct {
-	store *sqlstore.Store
+	store store.Store
 }
 
 // SavePost ...

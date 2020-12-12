@@ -13,7 +13,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/vielendanke/restful-service/internal/app/model"
 	"github.com/vielendanke/restful-service/internal/app/service"
-	"github.com/vielendanke/restful-service/internal/app/sqlstore"
+	"github.com/vielendanke/restful-service/internal/app/store"
 )
 
 const (
@@ -29,7 +29,7 @@ type server struct {
 	service *service.Service
 }
 
-func newServer(store *sqlstore.Store, config *Config) (*server, error) {
+func newServer(store store.Store, config *Config) (*server, error) {
 	server := &server{
 		logger:  logrus.New(),
 		router:  mux.NewRouter(),

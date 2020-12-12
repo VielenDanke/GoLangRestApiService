@@ -2,13 +2,13 @@ package service
 
 import (
 	"github.com/vielendanke/restful-service/internal/app/model"
-	"github.com/vielendanke/restful-service/internal/app/sqlstore"
+	"github.com/vielendanke/restful-service/internal/app/store"
 	"golang.org/x/crypto/bcrypt"
 )
 
 // UserService ...
 type UserService struct {
-	store *sqlstore.Store
+	store store.Store
 }
 
 // SaveUser ...
