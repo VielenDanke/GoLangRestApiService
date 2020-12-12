@@ -20,7 +20,7 @@ func NewTestStore() store.Store {
 func (ts *TestStore) UserRepository() store.UserRepository {
 	if ts.userRepository == nil {
 		ts.userRepository = &UserRepository{
-			userDB: make(map[string]*model.User),
+			userDB: make(map[string]model.User),
 		}
 	}
 	return ts.userRepository
@@ -30,7 +30,7 @@ func (ts *TestStore) UserRepository() store.UserRepository {
 func (ts *TestStore) PostRepository() store.PostRepository {
 	if ts.postRepository == nil {
 		ts.postRepository = &PostRepository{
-			postDB: make(map[string]*model.Post),
+			postDB: make(map[string]model.Post),
 		}
 	}
 	return ts.postRepository
