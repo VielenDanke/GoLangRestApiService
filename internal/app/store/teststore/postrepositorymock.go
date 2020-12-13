@@ -8,13 +8,13 @@ import (
 
 // PostRepository ...
 type PostRepository struct {
-	postDB map[string]model.Post
+	PostDB map[string]model.Post
 }
 
 // FindAll ...
 func (pr *PostRepository) FindAll() ([]model.Post, error) {
-	posts := make([]model.Post, len(pr.postDB))
-	for _, v := range pr.postDB {
+	posts := make([]model.Post, len(pr.PostDB))
+	for _, v := range pr.PostDB {
 		posts = append(posts, v)
 	}
 	return posts, nil
@@ -22,7 +22,7 @@ func (pr *PostRepository) FindAll() ([]model.Post, error) {
 
 // Find ...
 func (pr *PostRepository) Find(id string) (*model.Post, error) {
-	post, ok := pr.postDB[id]
+	post, ok := pr.PostDB[id]
 	if !ok {
 		return nil, fmt.Errorf("Post not found")
 	}
@@ -31,20 +31,20 @@ func (pr *PostRepository) Find(id string) (*model.Post, error) {
 
 // Save ...
 func (pr *PostRepository) Save(post *model.Post) error {
-	pr.postDB[post.ID] = *post
+	pr.PostDB[post.ID] = *post
 	return nil
 }
 
 // Delete ...
 func (pr *PostRepository) Delete(id string) error {
-	delete(pr.postDB, id)
+	delete(pr.PostDB, id)
 	return nil
 }
 
 // FindAllPostsByUserID ...
 func (pr *PostRepository) FindAllPostsByUserID(id string) ([]model.Post, error) {
 	posts := []model.Post{}
-	for _, v := range pr.postDB {
+	for _, v := range pr.PostDB {
 		if v.UserID == id {
 			posts = append(posts, v)
 		}

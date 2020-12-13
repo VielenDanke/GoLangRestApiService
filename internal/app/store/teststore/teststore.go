@@ -7,8 +7,8 @@ import (
 
 // TestStore ...
 type TestStore struct {
-	userRepository *UserRepository
-	postRepository *PostRepository
+	UserRepo *UserRepository
+	PostRepo *PostRepository
 }
 
 // NewTestStore ...
@@ -18,20 +18,20 @@ func NewTestStore() store.Store {
 
 // UserRepository ...
 func (ts *TestStore) UserRepository() store.UserRepository {
-	if ts.userRepository == nil {
-		ts.userRepository = &UserRepository{
-			userDB: make(map[string]model.User),
+	if ts.UserRepo == nil {
+		ts.UserRepo = &UserRepository{
+			UserDB: make(map[string]model.User),
 		}
 	}
-	return ts.userRepository
+	return ts.UserRepo
 }
 
 // PostRepository ...
 func (ts *TestStore) PostRepository() store.PostRepository {
-	if ts.postRepository == nil {
-		ts.postRepository = &PostRepository{
-			postDB: make(map[string]model.Post),
+	if ts.PostRepo == nil {
+		ts.PostRepo = &PostRepository{
+			PostDB: make(map[string]model.Post),
 		}
 	}
-	return ts.postRepository
+	return ts.PostRepo
 }

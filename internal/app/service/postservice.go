@@ -15,10 +15,16 @@ func (ps *PostService) SavePost(post *model.Post) error {
 	if err := post.Validate(); err != nil {
 		return err
 	}
+	post.BeforeSaving()
 	if err := ps.store.PostRepository().Save(post); err != nil {
 		return err
 	}
 	return nil
+}
+
+// FindByID ...
+func (ps *PostService) FindByID(id string) (*model.Post, error) {
+	return ps.store.PostRepository().Find(id)
 }
 
 // FindAllPosts ...

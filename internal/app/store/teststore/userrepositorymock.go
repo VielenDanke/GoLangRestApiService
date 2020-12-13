@@ -8,18 +8,18 @@ import (
 
 // UserRepository ...
 type UserRepository struct {
-	userDB map[string]model.User
+	UserDB map[string]model.User
 }
 
 // Save ...
 func (ur *UserRepository) Save(user *model.User) error {
-	ur.userDB[user.ID] = *user
+	ur.UserDB[user.ID] = *user
 	return nil
 }
 
 // Find ...
 func (ur *UserRepository) Find(id string) (*model.User, error) {
-	user, ok := ur.userDB[id]
+	user, ok := ur.UserDB[id]
 	if !ok {
 		return nil, fmt.Errorf("User not found")
 	}
@@ -28,7 +28,7 @@ func (ur *UserRepository) Find(id string) (*model.User, error) {
 
 // FindByUsername ...
 func (ur *UserRepository) FindByUsername(username string) (*model.User, error) {
-	for _, v := range ur.userDB {
+	for _, v := range ur.UserDB {
 		if v.Username == username {
 			return &v, nil
 		}
@@ -38,14 +38,14 @@ func (ur *UserRepository) FindByUsername(username string) (*model.User, error) {
 
 // Delete ...
 func (ur *UserRepository) Delete(id string) error {
-	delete(ur.userDB, id)
+	delete(ur.UserDB, id)
 	return nil
 }
 
 // FindAll ...
 func (ur *UserRepository) FindAll() ([]model.User, error) {
 	users := []model.User{}
-	for _, v := range ur.userDB {
+	for _, v := range ur.UserDB {
 		users = append(users, v)
 	}
 	return users, nil
