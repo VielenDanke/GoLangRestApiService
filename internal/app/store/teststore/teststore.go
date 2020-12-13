@@ -7,20 +7,25 @@ import (
 
 // TestStore ...
 type TestStore struct {
-	UserRepo *UserRepository
-	PostRepo *PostRepository
+	TestUserDB map[string]model.User
+	TestPostDB map[string]model.Post
+	UserRepo   *UserRepository
+	PostRepo   *PostRepository
 }
 
 // NewTestStore ...
-func NewTestStore() store.Store {
-	return &TestStore{}
+func NewTestStore(testUserDB map[string]model.User, testPostDB map[string]model.Post) store.Store {
+	return &TestStore{
+		TestUserDB: testUserDB,
+		TestPostDB: testPostDB,
+	}
 }
 
 // UserRepository ...
 func (ts *TestStore) UserRepository() store.UserRepository {
 	if ts.UserRepo == nil {
 		ts.UserRepo = &UserRepository{
-			UserDB: make(map[string]model.User),
+			UserDB: ts.TestUserDB,
 		}
 	}
 	return ts.UserRepo
@@ -30,7 +35,7 @@ func (ts *TestStore) UserRepository() store.UserRepository {
 func (ts *TestStore) PostRepository() store.PostRepository {
 	if ts.PostRepo == nil {
 		ts.PostRepo = &PostRepository{
-			PostDB: make(map[string]model.Post),
+			PostDB: ts.TestPostDB,
 		}
 	}
 	return ts.PostRepo
