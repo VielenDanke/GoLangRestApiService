@@ -15,7 +15,7 @@ func Start(config *Config) error {
 	}
 	store := sqlstore.NewStore(db)
 
-	server, err := newServer(store, config)
+	server, err := NewServer(store, config)
 
 	if err != nil {
 		return err

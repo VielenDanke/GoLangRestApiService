@@ -22,32 +22,34 @@ const (
 
 type ctxKey int8
 
-type server struct {
+// Server ...
+type Server struct {
 	logger  *logrus.Logger
 	router  *mux.Router
 	config  *Config
 	service *service.Service
 }
 
-func newServer(store store.Store, config *Config) (*server, error) {
-	server := &server{
+// NewServer ...
+func NewServer(store store.Store, config *Config) (*Server, error) {
+	Server := &Server{
 		logger:  logrus.New(),
 		router:  mux.NewRouter(),
 		config:  config,
 		service: service.NewService(store),
 	}
-	if err := server.configureLogger(); err != nil {
+	if err := Server.configureLogger(); err != nil {
 		return nil, err
 	}
-	server.configureRouter()
-	return server, nil
+	Server.configureRouter()
+	return Server, nil
 }
 
-func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.router.ServeHTTP(w, r)
 }
 
-func (s *server) configureLogger() error {
+func (s *Server) configureLogger() error {
 	level, err := logrus.ParseLevel(s.config.LogLevel)
 	if err != nil {
 		return err
@@ -56,7 +58,7 @@ func (s *server) configureLogger() error {
 	return nil
 }
 
-func (s *server) configureRouter() {
+func (s *Server) configureRouter() {
 	s.router.Use(handlers.CORS(
 		handlers.AllowedOrigins([]string{"*"}),
 		handlers.AllowedHeaders([]string{"*"}),
@@ -80,7 +82,7 @@ func (s *server) configureRouter() {
 	secure.HandleFunc("/cabinet/posts/", s.handleAllUserPostsInCabinet).Methods("GET")
 }
 
-func (s *server) authenticateUser(next http.Handler) http.Handler {
+func (s *Server) authenticateUser(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
 
@@ -115,7 +117,7 @@ func (s *server) authenticateUser(next http.Handler) http.Handler {
 	})
 }
 
-func (s *server) handleUserPostsByUserID(w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleUserPostsByUserID(w http.ResponseWriter, r *http.Request) {
 	userID := mux.Vars(r)["userID"]
 	posts, err := s.service.PostService().FindAllPostsByUserID(userID)
 	if err != nil {
@@ -125,7 +127,7 @@ func (s *server) handleUserPostsByUserID(w http.ResponseWriter, r *http.Request)
 	jsonResponse(w, 200, posts)
 }
 
-func (s *server) handleUserCabinet(w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleUserCabinet(w http.ResponseWriter, r *http.Request) {
 	if user := r.Context().Value(ctxKeyUser).(*model.User); user != nil {
 		jsonResponse(w, 200, user)
 		return
@@ -133,7 +135,7 @@ func (s *server) handleUserCabinet(w http.ResponseWriter, r *http.Request) {
 	s.errorRespond(w, fmt.Errorf("User in contenxt not found"), 401)
 }
 
-func (s *server) handleAllUserPostsInCabinet(w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleAllUserPostsInCabinet(w http.ResponseWriter, r *http.Request) {
 	if user := r.Context().Value(ctxKeyUser).(*model.User); user != nil {
 		posts, err := s.service.PostService().FindAllPostsByUserID(user.ID)
 		if err != nil {
@@ -146,7 +148,7 @@ func (s *server) handleAllUserPostsInCabinet(w http.ResponseWriter, r *http.Requ
 	s.errorRespond(w, fmt.Errorf("User in context not found"), 401)
 }
 
-func (s *server) handleUserLogin(w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleUserLogin(w http.ResponseWriter, r *http.Request) {
 	loginRequest := &userLoginRequest{}
 
 	json.NewDecoder(r.Body).Decode(loginRequest)
@@ -166,7 +168,7 @@ func (s *server) handleUserLogin(w http.ResponseWriter, r *http.Request) {
 	jsonResponse(w, 200, user)
 }
 
-func (s *server) savePost(w http.ResponseWriter, r *http.Request) {
+func (s *Server) savePost(w http.ResponseWriter, r *http.Request) {
 	user := r.Context().Value(ctxKeyUser).(*model.User)
 	saveRequest := &postSaveRequest{}
 	json.NewDecoder(r.Body).Decode(saveRequest)
@@ -184,11 +186,13 @@ func (s *server) savePost(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(201)
 }
 
-func (s *server) saveUser(w http.ResponseWriter, r *http.Request) {
+func (s *Server) saveUser(w http.ResponseWriter, r *http.Request) {
 	userRequest := &userSaveRequest{}
 
-	json.NewDecoder(r.Body).Decode(userRequest)
-
+	if err := json.NewDecoder(r.Body).Decode(userRequest); err != nil {
+		s.errorRespond(w, err, 400)
+		return
+	}
 	user := &model.User{
 		Username: userRequest.Username,
 		Password: userRequest.Password,
@@ -196,12 +200,12 @@ func (s *server) saveUser(w http.ResponseWriter, r *http.Request) {
 	}
 	err := s.service.UserService().SaveUser(user)
 	if err != nil {
-		s.errorRespond(w, err, 500)
+		s.errorRespond(w, err, http.StatusUnprocessableEntity)
 	}
 	w.WriteHeader(201)
 }
 
-func (s *server) findAllPosts(w http.ResponseWriter, r *http.Request) {
+func (s *Server) findAllPosts(w http.ResponseWriter, r *http.Request) {
 	posts, err := s.service.PostService().FindAllPosts()
 	if err != nil {
 		s.errorRespond(w, err, 500)
@@ -210,7 +214,7 @@ func (s *server) findAllPosts(w http.ResponseWriter, r *http.Request) {
 	jsonResponse(w, 200, posts)
 }
 
-func (s *server) findAllUsers(w http.ResponseWriter, r *http.Request) {
+func (s *Server) findAllUsers(w http.ResponseWriter, r *http.Request) {
 	users, err := s.service.UserService().FindAllUsers()
 	if err != nil {
 		s.errorRespond(w, err, 500)
@@ -219,7 +223,7 @@ func (s *server) findAllUsers(w http.ResponseWriter, r *http.Request) {
 	jsonResponse(w, 200, users)
 }
 
-func (s *server) errorRespond(w http.ResponseWriter, err error, status int) {
+func (s *Server) errorRespond(w http.ResponseWriter, err error, status int) {
 	s.logger.Debug(err)
 	errorMap := map[string]string{
 		"Error message": err.Error(),
@@ -227,7 +231,7 @@ func (s *server) errorRespond(w http.ResponseWriter, err error, status int) {
 	jsonResponse(w, status, errorMap)
 }
 
-func (s *server) createToken(user *model.User) (string, error) {
+func (s *Server) createToken(user *model.User) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"username":   user.Username,
 		"role":       user.Authority,
