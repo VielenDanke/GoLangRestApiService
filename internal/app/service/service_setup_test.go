@@ -16,12 +16,12 @@ var testPostDB map[string]model.Post
 var testUserDB map[string]model.User
 
 func teardownTestDB() {
-	if len(testPostDB) > 0 {
+	if testPostDB != nil && len(testPostDB) > 0 {
 		for k := range testPostDB {
 			delete(testPostDB, k)
 		}
 	}
-	if len(testUserDB) > 0 {
+	if testUserDB != nil && len(testUserDB) > 0 {
 		for k := range testUserDB {
 			delete(testUserDB, k)
 		}

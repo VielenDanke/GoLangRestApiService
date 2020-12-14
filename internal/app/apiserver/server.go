@@ -72,11 +72,9 @@ func (s *Server) configureRouter() {
 	postsRouter.HandleFunc("/", s.findAllPosts).Methods("GET")
 	postsRouter.HandleFunc("/{userID}/", s.handleUserPostsByUserID).Methods("GET")
 
-	usersRouter := s.router.PathPrefix("/users").Subrouter()
-	usersRouter.HandleFunc("/", s.findAllUsers).Methods("GET")
-
 	secure := s.router.PathPrefix("/auth").Subrouter()
 	secure.Use(s.authenticateUser)
+	secure.HandleFunc("/users/", s.findAllUsers).Methods("GET")
 	secure.HandleFunc("/posts/", s.savePost).Methods("POST")
 	secure.HandleFunc("/cabinet/", s.handleUserCabinet).Methods("GET")
 	secure.HandleFunc("/cabinet/posts/", s.handleAllUserPostsInCabinet).Methods("GET")
@@ -158,7 +156,7 @@ func (s *Server) handleUserLogin(w http.ResponseWriter, r *http.Request) {
 		s.errorRespond(w, err, 404)
 		return
 	}
-	token, err := s.createToken(user)
+	token, err := s.CreateToken(user)
 	if err != nil {
 		s.errorRespond(w, err, 500)
 		return
@@ -231,7 +229,8 @@ func (s *Server) errorRespond(w http.ResponseWriter, err error, status int) {
 	jsonResponse(w, status, errorMap)
 }
 
-func (s *Server) createToken(user *model.User) (string, error) {
+// CreateToken ...
+func (s *Server) CreateToken(user *model.User) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"username":   user.Username,
 		"role":       user.Authority,

@@ -19,6 +19,19 @@ var (
 	err        error
 )
 
+func teardownTestDB() {
+	if testPostDB != nil && len(testPostDB) > 0 {
+		for k := range testPostDB {
+			delete(testPostDB, k)
+		}
+	}
+	if testUserDB != nil && len(testUserDB) > 0 {
+		for k := range testUserDB {
+			delete(testUserDB, k)
+		}
+	}
+}
+
 func TestMain(m *testing.M) {
 	testUserDB = make(map[string]model.User)
 	testPostDB = make(map[string]model.Post)
