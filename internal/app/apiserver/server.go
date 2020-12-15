@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/vielendanke/restful-service/internal/app/service"
 	"net/http"
 	"time"
 
@@ -12,8 +13,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 	"github.com/vielendanke/restful-service/internal/app/model"
-	"github.com/vielendanke/restful-service/internal/app/service"
-	"github.com/vielendanke/restful-service/internal/app/store"
 )
 
 const (
@@ -27,16 +26,16 @@ type Server struct {
 	logger  *logrus.Logger
 	router  *mux.Router
 	config  *Config
-	service *service.Service
+	service service.Service
 }
 
 // NewServer ...
-func NewServer(store store.Store, config *Config) (*Server, error) {
+func NewServer(service service.Service, config *Config) (*Server, error) {
 	Server := &Server{
 		logger:  logrus.New(),
 		router:  mux.NewRouter(),
 		config:  config,
-		service: service.NewService(store),
+		service: service,
 	}
 	if err := Server.configureLogger(); err != nil {
 		return nil, err
@@ -149,7 +148,10 @@ func (s *Server) handleAllUserPostsInCabinet(w http.ResponseWriter, r *http.Requ
 func (s *Server) handleUserLogin(w http.ResponseWriter, r *http.Request) {
 	loginRequest := &userLoginRequest{}
 
-	json.NewDecoder(r.Body).Decode(loginRequest)
+	if err := json.NewDecoder(r.Body).Decode(loginRequest); err != nil {
+		s.errorRespond(w, err, 400)
+		return
+	}
 
 	user, err := s.service.UserService().Login(loginRequest.Username, loginRequest.Password)
 	if err != nil {
@@ -169,18 +171,19 @@ func (s *Server) handleUserLogin(w http.ResponseWriter, r *http.Request) {
 func (s *Server) savePost(w http.ResponseWriter, r *http.Request) {
 	user := r.Context().Value(ctxKeyUser).(*model.User)
 	saveRequest := &postSaveRequest{}
-	json.NewDecoder(r.Body).Decode(saveRequest)
+	if err := json.NewDecoder(r.Body).Decode(saveRequest); err != nil {
+		s.errorRespond(w, err, 400)
+		return
+	}
 	post := &model.Post{
 		Name:    saveRequest.Name,
 		Content: saveRequest.Content,
 		UserID:  user.ID,
 	}
-	post.BeforeSaving()
-	if err := post.Validate(); err != nil {
+	if err := s.service.PostService().SavePost(post); err != nil {
 		s.errorRespond(w, err, 400)
 		return
 	}
-	s.service.PostService().SavePost(post)
 	w.WriteHeader(201)
 }
 

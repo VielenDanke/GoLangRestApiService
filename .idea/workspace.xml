@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="c09d82c6-dd0f-45a4-b1eb-d0c38af4c8bb" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/apiserver" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/internal/app/apiserver/server.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/app/apiserver/server.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/internal/app/service/postservice.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/app/service/serviceimpl/postserviceimpl.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/internal/app/service/postservice_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/app/service/serviceimpl/postserviceimpl_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/internal/app/service/service.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/app/service/serviceimpl/serviceimpl.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/internal/app/service/service_setup_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/app/service/serviceimpl/serviceimpl_setup_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/internal/app/service/userservice.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/app/service/serviceimpl/userserviceimpl.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/internal/app/service/userservice_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/app/service/serviceimpl/userserviceimpl_test.go" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Go File" />
+      </list>
+    </option>
+  </component>
+  <component name="GOROOT" url="file://$PROJECT_DIR$/../../../../../../Go" />
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GoLibraries">
+    <option name="indexEntireGoPath" value="false" />
+  </component>
+  <component name="ProjectId" id="1lfxFxO3oIE38FSC8R09LwGfVwV" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="DefaultGoTemplateProperty" value="Go File" />
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="go.import.settings.migrated" value="true" />
+    <property name="go.sdk.automatically.set" value="true" />
+    <property name="go.tried.to.enable.integration.vgo.integrator" value="true" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="settings.editor.selected.configurable" value="preferences.lookFeel" />
+  </component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\viele\GoProjects\github.com\vielendanke\restful-service\internal\app\service\impl" />
+    </key>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VgoProject">
+    <integration-enabled>true</integration-enabled>
+  </component>
+</project>

@@ -2,6 +2,7 @@ package apiserver
 
 import (
 	"database/sql"
+	"github.com/vielendanke/restful-service/internal/app/service/serviceimpl"
 	"net/http"
 
 	"github.com/vielendanke/restful-service/internal/app/store/sqlstore"
@@ -14,8 +15,8 @@ func Start(config *Config) error {
 		return err
 	}
 	store := sqlstore.NewStore(db)
-
-	server, err := NewServer(store, config)
+	service := serviceimpl.NewService(store)
+	server, err := NewServer(service, config)
 
 	if err != nil {
 		return err

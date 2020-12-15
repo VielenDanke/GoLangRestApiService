@@ -33,35 +33,23 @@ func TestSever_HandleUserCreate(t *testing.T) {
 			payload:      "invalid body",
 			expectedCode: http.StatusBadRequest,
 		},
-		{
-			name: "invalid email",
-			payload: map[string]string{
-				"username": "username",
-				"password": "password",
-				"nickname": "nickname",
-			},
-			expectedCode: http.StatusUnprocessableEntity,
-		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			rec := httptest.NewRecorder()
 			b := &bytes.Buffer{}
-			json.NewEncoder(b).Encode(tc.payload)
+			err := json.NewEncoder(b).Encode(tc.payload)
 			req, _ := http.NewRequest(http.MethodPost, "/registration", b)
 			testServer.ServeHTTP(rec, req)
+			assert.NoError(t, err)
 			assert.Equal(t, tc.expectedCode, rec.Code)
 		})
 	}
 }
 
 func TestServer_HandleFindAllUsers(t *testing.T) {
-	defer teardownTestDB()
-	u := model.TestUser(t)
-	u.Authority = 1
-	testStore.UserRepository().Save(u)
-
+	u := model.MockUser()
 	token, _ := testServer.CreateToken(u)
 
 	testCases := []struct {
@@ -106,42 +94,23 @@ func TestServer_HandleFindAllPostsByUserID(t *testing.T) {
 }
 
 func TestServer_HandleUserLogin(t *testing.T) {
-	defer teardownTestDB()
-	u := model.TestUser(t)
-	validUsername := u.Username
-	validPassword := u.Password
-	u.BeforeSaving()
-
-	testStore.UserRepository().Save(u)
-
 	testCases := []struct {
 		name         string
 		payload      interface{}
 		expectedCode int
 	}{
 		{
-			name: "valid",
+			name: "valid request",
 			payload: map[string]string{
-				"username": validUsername,
-				"password": validPassword,
+				"username": "username@mail.ru",
+				"password": "userpassword",
 			},
 			expectedCode: http.StatusOK,
 		},
 		{
-			name: "invalid email",
-			payload: map[string]string{
-				"username": "username@mail.ru",
-				"password": validPassword,
-			},
-			expectedCode: http.StatusNotFound,
-		},
-		{
-			name: "invalid password",
-			payload: map[string]string{
-				"username": validUsername,
-				"password": "invalidpassword",
-			},
-			expectedCode: http.StatusNotFound,
+			name: "invalid request",
+			payload: "invalid",
+			expectedCode: http.StatusBadRequest,
 		},
 	}
 
@@ -149,28 +118,21 @@ func TestServer_HandleUserLogin(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			rec := httptest.NewRecorder()
 			b := &bytes.Buffer{}
-			json.NewEncoder(b).Encode(tc.payload)
+			err := json.NewEncoder(b).Encode(tc.payload)
 			req, _ := http.NewRequest(http.MethodPost, "/login", b)
 			testServer.ServeHTTP(rec, req)
+			assert.NoError(t, err)
 			assert.Equal(t, tc.expectedCode, rec.Code)
 		})
 	}
 }
 
 func TestServer_HandlePostSave(t *testing.T) {
-	defer teardownTestDB()
-	u := model.TestUser(t)
-	u.BeforeSaving()
-	u.Authority = 1
-	testStore.UserRepository().Save(u)
-	vadlidPayload := map[string]string{
+	validPayload := map[string]string{
 		"name":    "Valid post name",
 		"content": "Valid post content about post name",
 	}
-	invalidPayload := map[string]string{
-		"name":    "a",
-		"content": "b",
-	}
+	u := model.MockUser()
 
 	token, _ := testServer.CreateToken(u)
 
@@ -182,19 +144,19 @@ func TestServer_HandlePostSave(t *testing.T) {
 	}{
 		{
 			name:         "valid post and token",
-			payload:      vadlidPayload,
+			payload:      validPayload,
 			token:        token,
 			expectedCode: http.StatusCreated,
 		},
 		{
 			name:         "invalid post",
-			payload:      invalidPayload,
+			payload:      "invalid",
 			token:        token,
 			expectedCode: http.StatusBadRequest,
 		},
 		{
 			name:         "invalid token",
-			payload:      vadlidPayload,
+			payload:      validPayload,
 			token:        "invalid",
 			expectedCode: http.StatusUnauthorized,
 		},
@@ -204,21 +166,18 @@ func TestServer_HandlePostSave(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			rec := httptest.NewRecorder()
 			b := &bytes.Buffer{}
-			json.NewEncoder(b).Encode(tc.payload)
+			err := json.NewEncoder(b).Encode(tc.payload)
 			req, _ := http.NewRequest(http.MethodPost, "/auth/posts/", b)
 			req.Header.Set("Authorization", tc.token)
 			testServer.ServeHTTP(rec, req)
 			assert.Equal(t, tc.expectedCode, rec.Code)
+			assert.NoError(t, err)
 		})
 	}
 }
 
 func TestServer_HandleUserCabinet(t *testing.T) {
-	defer teardownTestDB()
-	u := model.TestUser(t)
-	u.BeforeSaving()
-	u.Authority = 1
-	testStore.UserRepository().Save(u)
+	u := model.MockUser()
 
 	token, _ := testServer.CreateToken(u)
 
@@ -251,11 +210,7 @@ func TestServer_HandleUserCabinet(t *testing.T) {
 }
 
 func TestServer_HandleUsersPostInCabinet(t *testing.T) {
-	defer teardownTestDB()
-	u := model.TestUser(t)
-	u.BeforeSaving()
-	u.Authority = 1
-	testStore.UserRepository().Save(u)
+	u := model.MockUser()
 
 	token, _ := testServer.CreateToken(u)
 
